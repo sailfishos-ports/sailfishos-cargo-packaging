@@ -1,11 +1,11 @@
 # To bootstrap from scratch, set the date from src/snapshots.txt
 # e.g. 0.11.0 wants 2016-03-21
-%bcond_without bootstrap
+%bcond_with bootstrap
 %global bootstrap_date 2016-03-21
 
 Name:           cargo
 Version:        0.11.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -55,6 +55,9 @@ BuildRequires:  libssh2-devel
 BuildRequires:  openssl-devel
 BuildRequires:  zlib-devel
 BuildRequires:  pkgconfig
+
+# Cargo is not much use with Rust
+Requires:       rust
 
 %description
 Cargo is a tool that allows Rust projects to declare their various dependencies
@@ -140,6 +143,10 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Mon Aug 22 2016 Josh Stone <jistone@redhat.com> 0.11.0-3
+- Rebuild without bootstrap binaries.
+- Add a runtime requirement on rust.
+
 * Mon Aug 22 2016 Josh Stone <jistone@redhat.com> - 0.11.0-2
 - Initial import into Fedora (#1357749), bootstrapped
 
