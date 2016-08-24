@@ -4,8 +4,8 @@
 %global bootstrap_date 2016-03-21
 
 Name:           cargo
-Version:        0.11.0
-Release:        3%{?dist}
+Version:        0.12.0
+Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -143,6 +143,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Wed Aug 24 2016 Josh Stone <jistone@redhat.com> - 0.12.0-1
+- Update to 0.12.0.
+
 * Mon Aug 22 2016 Josh Stone <jistone@redhat.com> 0.11.0-3
 - Rebuild without bootstrap binaries.
 - Add a runtime requirement on rust.
