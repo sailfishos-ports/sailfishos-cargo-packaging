@@ -1,8 +1,7 @@
 # To bootstrap from scratch, set the date from src/snapshots.txt
 # e.g. 0.11.0 wants 2016-03-21
-# Newer than required is fine, especially to enable new archs.
 %bcond_without bootstrap
-%global bootstrap_date 2016-03-25
+%global bootstrap_date 2016-03-21
 
 Name:           cargo
 Version:        0.12.0
@@ -18,10 +17,12 @@ Source0:        https://github.com/rust-lang/%{name}/archive/%{version}.tar.gz#/
 Source1:        https://github.com/rust-lang/rust-installer/archive/%{rust_installer}.tar.gz#/rust-installer-%{rust_installer}.tar.gz
 
 %if %with bootstrap
-%global bootstrap_base https://static.rust-lang.org/cargo-dist/%{bootstrap_date}/%{name}-nightly
+%global bootstrap_dist https://static.rust-lang.org/cargo-dist
+%global bootstrap_base %{bootstrap_dist}/%{bootstrap_date}/%{name}-nightly
 Source10:       %{bootstrap_base}-x86_64-unknown-linux-gnu.tar.gz
 Source11:       %{bootstrap_base}-i686-unknown-linux-gnu.tar.gz
-Source12:       %{bootstrap_base}-armv7-unknown-linux-gnueabihf.tar.gz
+# "unofficial" snapshots below for new architectures
+Source12:       %{bootstrap_dist}/2016-03-25/%{name}-nightly-armv7-unknown-linux-gnueabihf.tar.gz
 %endif
 
 # Use vendored crate dependencies so we can build offline.
@@ -33,6 +34,7 @@ Source12:       %{bootstrap_base}-armv7-unknown-linux-gnueabihf.tar.gz
 Source100:      %{name}-%{version}-vendor.tar.gz
 
 Patch1:         cargo-0.11.0-option-checking.patch
+Patch2:         cargo-0.12.0-no-dl-hash.patch
 
 # Only x86_64 and i686 are Tier 1 platforms at this time.
 ExclusiveArch:  x86_64 i686 armv7hl
@@ -88,6 +90,7 @@ git commit -m "builddir patched" config.json
 popd
 
 %patch1 -p1 -b .option-checking
+%patch2 -p1 -b .no-dl
 
 %if %with bootstrap
 mkdir -p target/dl/
@@ -151,6 +154,7 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 %changelog
 * Fri Sep 02 2016 Josh Stone <jistone@redhat.com> - 0.12.0-2
 - Bootstrap armv7hl.
+- Patch dl-snapshot.py to ignore hashes on unknown archs.
 
 * Wed Aug 24 2016 Josh Stone <jistone@redhat.com> - 0.12.0-1
 - Update to 0.12.0.

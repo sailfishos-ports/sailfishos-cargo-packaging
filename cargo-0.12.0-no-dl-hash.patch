@@ -1,0 +1,32 @@
+--- cargo-0.12.0/src/etc/dl-snapshot.py.no-dl	2016-07-04 00:44:08.000000000 -0700
++++ cargo-0.12.0/src/etc/dl-snapshot.py	2016-09-03 08:40:27.174073636 -0700
+@@ -55,7 +55,8 @@ elif (target_os == 'darwin'):
+     plat_os = 'macos'
+ platform = "%s-%s" % (plat_os, plat_arch)
+ if platform not in snaps[date]:
+-    raise Exception("no snapshot for the triple '%s'" % triple)
++    print("no snapshot for the triple '%s'" % triple)
++    print("hash will not be verified")
+ 
+ # Reconstitute triple with any applicable changes.  For historical reasons
+ # this differs from the snapshots.txt platform name.
+@@ -66,8 +67,8 @@ elif target_os == 'darwin':
+ elif target_os == 'windows':
+     vendor = 'pc'
+     target_os = 'windows-gnu'
+-triple = "%s-%s-%s" % (arch, vendor, target_os)
+-hash = snaps[date][platform]
++#triple = "%s-%s-%s" % (arch, vendor, target_os)
++hash = snaps[date].get(platform)
+ 
+ tarball = 'cargo-nightly-' + triple + '.tar.gz'
+ url = 'https://static.rust-lang.org/cargo-dist/%s/%s' % \
+@@ -84,7 +85,7 @@ if os.path.isdir(dst):
+ exists = False
+ if os.path.exists(dl_path):
+     h = hashlib.sha1(open(dl_path, 'rb').read()).hexdigest()
+-    if h == hash:
++    if hash is None or h == hash:
+         print("file already present %s (%s)" % (dl_path, hash,))
+         exists = True
+ 
