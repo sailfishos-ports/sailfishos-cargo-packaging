@@ -1,11 +1,11 @@
 # To bootstrap from scratch, set the date from src/snapshots.txt
 # e.g. 0.11.0 wants 2016-03-21
-%bcond_without bootstrap
+%bcond_with bootstrap
 %global bootstrap_date 2016-03-21
 
 Name:           cargo
 Version:        0.12.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -152,6 +152,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Sat Sep 03 2016 Josh Stone <jistone@redhat.com> - 0.12.0-3
+- Rebuild without bootstrap binaries.
+
 * Fri Sep 02 2016 Josh Stone <jistone@redhat.com> - 0.12.0-2
 - Bootstrap armv7hl.
 - Patch dl-snapshot.py to ignore hashes on unknown archs.
