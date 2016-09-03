@@ -1,11 +1,12 @@
 # To bootstrap from scratch, set the date from src/snapshots.txt
 # e.g. 0.11.0 wants 2016-03-21
-%bcond_with bootstrap
-%global bootstrap_date 2016-03-21
+# Newer than required is fine, especially to enable new archs.
+%bcond_without bootstrap
+%global bootstrap_date 2016-03-25
 
 Name:           cargo
 Version:        0.12.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -17,9 +18,10 @@ Source0:        https://github.com/rust-lang/%{name}/archive/%{version}.tar.gz#/
 Source1:        https://github.com/rust-lang/rust-installer/archive/%{rust_installer}.tar.gz#/rust-installer-%{rust_installer}.tar.gz
 
 %if %with bootstrap
-%define bootstrap_base https://static.rust-lang.org/cargo-dist/%{bootstrap_date}/%{name}-nightly
+%global bootstrap_base https://static.rust-lang.org/cargo-dist/%{bootstrap_date}/%{name}-nightly
 Source10:       %{bootstrap_base}-x86_64-unknown-linux-gnu.tar.gz
 Source11:       %{bootstrap_base}-i686-unknown-linux-gnu.tar.gz
+Source12:       %{bootstrap_base}-armv7-unknown-linux-gnueabihf.tar.gz
 %endif
 
 # Use vendored crate dependencies so we can build offline.
@@ -32,9 +34,13 @@ Source100:      %{name}-%{version}-vendor.tar.gz
 
 Patch1:         cargo-0.11.0-option-checking.patch
 
-# Only x86_64 and i686 have bootstrap packages at this time.
-ExclusiveArch:  x86_64 i686
-%define rust_triple %{_target_cpu}-unknown-linux-gnu
+# Only x86_64 and i686 are Tier 1 platforms at this time.
+ExclusiveArch:  x86_64 i686 armv7hl
+%ifarch armv7hl
+%global rust_triple armv7-unknown-linux-gnueabihf
+%else
+%global rust_triple %{_target_cpu}-unknown-linux-gnu
+%endif
 
 BuildRequires:  rust
 BuildRequires:  make
@@ -85,7 +91,7 @@ popd
 
 %if %with bootstrap
 mkdir -p target/dl/
-cp -t target/dl/ %{SOURCE10} %{SOURCE11}
+cp -t target/dl/ %{SOURCE10} %{SOURCE11} %{SOURCE12}
 %endif
 
 
@@ -143,6 +149,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Fri Sep 02 2016 Josh Stone <jistone@redhat.com> - 0.12.0-2
+- Bootstrap armv7hl.
+
 * Wed Aug 24 2016 Josh Stone <jistone@redhat.com> - 0.12.0-1
 - Update to 0.12.0.
 
