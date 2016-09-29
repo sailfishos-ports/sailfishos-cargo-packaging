@@ -10,11 +10,11 @@ Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
 
-Source0:        https://github.com/rust-lang/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
+Source0:        https://github.com/rust-lang/%{name}/archive/%{version}/%{name}-%{version}.tar.gz
 
 # submodule, bundled for local installation only, not distributed
 %global rust_installer c37d3747da75c280237dc2d6b925078e69555499
-Source1:        https://github.com/rust-lang/rust-installer/archive/%{rust_installer}.tar.gz#/rust-installer-%{rust_installer}.tar.gz
+Source1:        https://github.com/rust-lang/rust-installer/archive/%{rust_installer}/rust-installer-%{rust_installer}.tar.gz
 
 %if %with bootstrap
 %global bootstrap_dist https://static.rust-lang.org/cargo-dist
@@ -64,7 +64,7 @@ BuildRequires:  openssl-devel
 BuildRequires:  zlib-devel
 BuildRequires:  pkgconfig
 
-# Cargo is not much use with Rust
+# Cargo is not much use without Rust
 Requires:       rust
 
 %description
