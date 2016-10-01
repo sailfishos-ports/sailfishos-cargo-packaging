@@ -4,8 +4,8 @@
 %global bootstrap_date 2016-03-21
 
 Name:           cargo
-Version:        0.12.0
-Release:        3%{?dist}
+Version:        0.13.0
+Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -31,10 +31,8 @@ Source12:       %{bootstrap_dist}/2016-03-25/%{name}-nightly-armv7-unknown-linux
 # want to link to.  With our -devel buildreqs in place, they'll be used instead.
 # FIXME: These should all eventually be packaged on their own!
 # (needs directory registries, https://github.com/rust-lang/cargo/pull/2857)
-Source100:      %{name}-%{version}-vendor.tar.gz
-
-Patch1:         cargo-0.11.0-option-checking.patch
-Patch2:         cargo-0.12.0-no-dl-hash.patch
+# (directory registries are now in 0.13.0, but bootstrap doesn't support it yet.)
+Source100:      %{name}-%{version}-vendor.tar.xz
 
 # Only x86_64 and i686 are Tier 1 platforms at this time.
 ExclusiveArch:  x86_64 i686 armv7hl
@@ -54,6 +52,10 @@ BuildRequires:  git
 
 %if %without bootstrap
 BuildRequires:  %{name}
+%global local_cargo %{_bindir}/%{name}
+%else
+%global bootstrap_root cargo-nightly-%{rust_triple}
+%global local_cargo %{_builddir}/%{name}-%{version}/%{bootstrap_root}/cargo/bin/cargo
 %endif
 
 # Indirect dependencies for vendored -sys crates above
@@ -89,12 +91,9 @@ git config user.email cargo-owner@fedoraproject.org
 git commit -m "builddir patched" config.json
 popd
 
-%patch1 -p1 -b .option-checking
-%patch2 -p1 -b .no-dl
-
 %if %with bootstrap
-mkdir -p target/dl/
-cp -t target/dl/ %{SOURCE10} %{SOURCE11} %{SOURCE12}
+find %{sources} -name '%{bootstrap_root}.tar.gz' -exec tar -xvzf '{}' ';'
+test -f '%{local_cargo}'
 %endif
 
 
@@ -113,8 +112,8 @@ export RUSTFLAGS="-C opt-level=3 -g"
 
 %configure --disable-option-checking \
   --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
-  %{!?with_bootstrap:--local-cargo=/usr/bin/cargo} \
-  --local-rust-root=/usr \
+  --local-cargo=%{local_cargo} \
+  --local-rust-root=%{_prefix} \
   %{nil}
 
 %make_build VERBOSE=1
@@ -152,6 +151,10 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Fri Sep 30 2016 Josh Stone <jistone@redhat.com> - 0.13.0-1
+- Update to 0.13.0.
+- Always use --local-cargo, even for bootstrap binaries.
+
 * Sat Sep 03 2016 Josh Stone <jistone@redhat.com> - 0.12.0-3
 - Rebuild without bootstrap binaries.
 
