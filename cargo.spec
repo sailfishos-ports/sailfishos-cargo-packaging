@@ -108,7 +108,8 @@ export CARGO_HOME=$PWD/.cargo
 export CARGO_REGISTRY_INDEX="file://$PWD/vendor/index"
 
 # this should eventually migrate to distro policy
-export RUSTFLAGS="-C opt-level=3 -g"
+# (disabling MIR due to https://github.com/rust-lang/rust/issues/36774)
+export RUSTFLAGS="-C opt-level=3 -g -Zorbit=no"
 
 %configure --disable-option-checking \
   --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
@@ -154,6 +155,7 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 * Fri Sep 30 2016 Josh Stone <jistone@redhat.com> - 0.13.0-1
 - Update to 0.13.0.
 - Always use --local-cargo, even for bootstrap binaries.
+- Disable MIR until rust#36774 is resolved.
 
 * Sat Sep 03 2016 Josh Stone <jistone@redhat.com> - 0.12.0-3
 - Rebuild without bootstrap binaries.
