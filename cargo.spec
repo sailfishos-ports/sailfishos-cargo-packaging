@@ -1,11 +1,11 @@
 # To bootstrap from scratch, set the date from src/snapshots.txt
 # e.g. 0.11.0 wants 2016-03-21
-%bcond_with bootstrap
+%bcond_without bootstrap
 %global bootstrap_date 2016-03-21
 
 Name:           cargo
 Version:        0.13.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -23,6 +23,7 @@ Source10:       %{bootstrap_base}-x86_64-unknown-linux-gnu.tar.gz
 Source11:       %{bootstrap_base}-i686-unknown-linux-gnu.tar.gz
 # "unofficial" snapshots below for new architectures
 Source12:       %{bootstrap_dist}/2016-03-25/%{name}-nightly-armv7-unknown-linux-gnueabihf.tar.gz
+Source13:       %{bootstrap_dist}/2016-04-05/%{name}-nightly-aarch64-unknown-linux-gnu.tar.gz
 %endif
 
 # Use vendored crate dependencies so we can build offline.
@@ -35,7 +36,7 @@ Source12:       %{bootstrap_dist}/2016-03-25/%{name}-nightly-armv7-unknown-linux
 Source100:      %{name}-%{version}-vendor.tar.xz
 
 # Only x86_64 and i686 are Tier 1 platforms at this time.
-ExclusiveArch:  x86_64 i686 armv7hl
+ExclusiveArch:  x86_64 i686 armv7hl aarch64
 %ifarch armv7hl
 %global rust_triple armv7-unknown-linux-gnueabihf
 %else
@@ -99,6 +100,14 @@ test -f '%{local_cargo}'
 
 %build
 
+%ifarch aarch64
+%if %with bootstrap
+# Upstream binaries have a 4k-paged jemalloc, which breaks with Fedora 64k pages.
+# https://github.com/rust-lang/rust/issues/36994
+export MALLOC_CONF=lg_dirty_mult:-1
+%endif
+%endif
+
 # convince libgit2-sys to use the distro libgit2
 export LIBGIT2_SYS_USE_PKG_CONFIG=1
 
@@ -152,6 +161,10 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Thu Oct 06 2016 Josh Stone <jistone@redhat.com> - 0.13.0-2
+- Bootstrap aarch64.
+- Use jemalloc's MALLOC_CONF to work around #36944.
+
 * Fri Sep 30 2016 Josh Stone <jistone@redhat.com> - 0.13.0-1
 - Update to 0.13.0.
 - Always use --local-cargo, even for bootstrap binaries.
