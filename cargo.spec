@@ -5,7 +5,7 @@
 
 Name:           cargo
 Version:        0.13.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -117,8 +117,7 @@ export CARGO_HOME=$PWD/.cargo
 export CARGO_REGISTRY_INDEX="file://$PWD/vendor/index"
 
 # this should eventually migrate to distro policy
-# (disabling MIR due to https://github.com/rust-lang/rust/issues/36774)
-export RUSTFLAGS="-C opt-level=3 -g -Zorbit=no"
+export RUSTFLAGS="-C opt-level=3 -g"
 
 %configure --disable-option-checking \
   --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
@@ -161,6 +160,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Thu Oct 20 2016 Josh Stone <jistone@redhat.com> - 0.13.0-4
+- Rebuild with Rust 1.12.1 and enabled MIR.
+
 * Fri Oct 07 2016 Josh Stone <jistone@redhat.com> - 0.13.0-3
 - Rebuild without bootstrap binaries.
 
