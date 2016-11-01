@@ -63,9 +63,15 @@ BuildRequires:  %{name}
 BuildRequires:  libcurl-devel
 BuildRequires:  libgit2-devel
 BuildRequires:  libssh2-devel
-BuildRequires:  openssl-devel
 BuildRequires:  zlib-devel
 BuildRequires:  pkgconfig
+
+%if 0%{fedora} >= 26
+# https://bugzilla.redhat.com/show_bug.cgi?id=1383778
+BuildRequires:  compat-openssl10-devel
+%else
+BuildRequires:  openssl-devel
+%endif
 
 # Cargo is not much use without Rust
 Requires:       rust
