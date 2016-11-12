@@ -1,11 +1,12 @@
 # To bootstrap from scratch, set the date from src/snapshots.txt
 # e.g. 0.11.0 wants 2016-03-21
 %bcond_with bootstrap
-%global bootstrap_date 2016-03-21
+%global bootstrap_date 2016-08-20
+# (using a newer version than required to get vendor directories and more archs)
 
 Name:           cargo
-Version:        0.13.0
-Release:        4%{?dist}
+Version:        0.14.0
+Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -13,7 +14,7 @@ URL:            https://crates.io/
 Source0:        https://github.com/rust-lang/%{name}/archive/%{version}/%{name}-%{version}.tar.gz
 
 # submodule, bundled for local installation only, not distributed
-%global rust_installer c37d3747da75c280237dc2d6b925078e69555499
+%global rust_installer 4f994850808a572e2cc8d43f968893c8e942e9bf
 Source1:        https://github.com/rust-lang/rust-installer/archive/%{rust_installer}/rust-installer-%{rust_installer}.tar.gz
 
 %if %with bootstrap
@@ -21,18 +22,15 @@ Source1:        https://github.com/rust-lang/rust-installer/archive/%{rust_insta
 %global bootstrap_base %{bootstrap_dist}/%{bootstrap_date}/%{name}-nightly
 Source10:       %{bootstrap_base}-x86_64-unknown-linux-gnu.tar.gz
 Source11:       %{bootstrap_base}-i686-unknown-linux-gnu.tar.gz
-# "unofficial" snapshots below for new architectures
-Source12:       %{bootstrap_dist}/2016-03-25/%{name}-nightly-armv7-unknown-linux-gnueabihf.tar.gz
-Source13:       %{bootstrap_dist}/2016-04-05/%{name}-nightly-aarch64-unknown-linux-gnu.tar.gz
+Source12:       %{bootstrap_base}-armv7-unknown-linux-gnueabihf.tar.gz
+Source13:       %{bootstrap_base}-aarch64-unknown-linux-gnu.tar.gz
 %endif
 
 # Use vendored crate dependencies so we can build offline.
-# Created using https://github.com/alexcrichton/cargo-vendor/
+# Created using https://github.com/alexcrichton/cargo-vendor/ 0.1.3
 # It's so big because some of the -sys crates include the C library source they
 # want to link to.  With our -devel buildreqs in place, they'll be used instead.
 # FIXME: These should all eventually be packaged on their own!
-# (needs directory registries, https://github.com/rust-lang/cargo/pull/2857)
-# (directory registries are now in 0.13.0, but bootstrap doesn't support it yet.)
 Source100:      %{name}-%{version}-vendor.tar.xz
 
 # Only x86_64 and i686 are Tier 1 platforms at this time.
@@ -47,12 +45,11 @@ BuildRequires:  rust
 BuildRequires:  make
 BuildRequires:  cmake
 BuildRequires:  gcc
-BuildRequires:  python
+BuildRequires:  python2 >= 2.7
 BuildRequires:  curl
-BuildRequires:  git
 
 %if %without bootstrap
-BuildRequires:  %{name}
+BuildRequires:  %{name} >= 0.13.0
 %global local_cargo %{_bindir}/%{name}
 %else
 %global bootstrap_root cargo-nightly-%{rust_triple}
@@ -91,12 +88,15 @@ mv rust-installer-%{rust_installer} src/rust-installer
 
 # vendored crates
 %setup -q -T -D -a 100
-pushd vendor/index
-sed -i.vendor -e "s#file://.*/vendor/#file://$PWD/../#g" config.json
-git config user.name "Cargo Packagers"
-git config user.email cargo-owner@fedoraproject.org
-git commit -m "builddir patched" config.json
-popd
+mkdir -p .cargo
+cat >.cargo/config <<EOF
+[source.crates-io]
+registry = 'https://github.com/rust-lang/crates.io-index'
+replace-with = 'vendored-sources'
+
+[source.vendored-sources]
+directory = '$PWD/vendor'
+EOF
 
 %if %with bootstrap
 find %{sources} -name '%{bootstrap_root}.tar.gz' -exec tar -xvzf '{}' ';'
@@ -106,10 +106,12 @@ test -f '%{local_cargo}'
 
 %build
 
-%ifarch aarch64
+%ifarch aarch64 %{mips} %{power64}
 %if %with bootstrap
 # Upstream binaries have a 4k-paged jemalloc, which breaks with Fedora 64k pages.
-# https://github.com/rust-lang/rust/issues/36994
+# See https://github.com/rust-lang/rust/issues/36994
+# Fixed by https://github.com/rust-lang/rust/issues/37392
+# So we can remove this when bootstrap reaches Rust 1.14.0, Cargo ~0.15.0.
 export MALLOC_CONF=lg_dirty_mult:-1
 %endif
 %endif
@@ -120,10 +122,12 @@ export LIBGIT2_SYS_USE_PKG_CONFIG=1
 # use our offline registry
 mkdir -p .cargo
 export CARGO_HOME=$PWD/.cargo
-export CARGO_REGISTRY_INDEX="file://$PWD/vendor/index"
+%undefine _configure_gnuconfig_hack
+%undefine _configure_libtool_hardening_hack
 
-# this should eventually migrate to distro policy
-export RUSTFLAGS="-C opt-level=3 -g"
+# This should eventually migrate to distro policy
+# Enable optimization, debuginfo, and link hardening.
+export RUSTFLAGS="-C opt-level=3 -g -Clink-args=-Wl,-z,relro,-z,now"
 
 %configure --disable-option-checking \
   --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
@@ -166,6 +170,10 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Thu Nov 10 2016 Josh Stone <jistone@redhat.com> - 0.14.0-1
+- Update to 0.14.0.
+- Use hardening flags for linking.
+
 * Thu Oct 20 2016 Josh Stone <jistone@redhat.com> - 0.13.0-4
 - Rebuild with Rust 1.12.1 and enabled MIR.
 

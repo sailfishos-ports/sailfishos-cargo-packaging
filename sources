@@ -1,7 +1,7 @@
-15de6e911e6f30820300ee55b01877ad  cargo-0.13.0.tar.gz
-9893c45d89b8c9e8820c7c589d9a82ab  cargo-0.13.0-vendor.tar.xz
-8345d7d2c397555e31d7a6d3d013e950  cargo-nightly-armv7-unknown-linux-gnueabihf.tar.gz
-eb4c15d79638ce16d09f97c097989e3e  cargo-nightly-i686-unknown-linux-gnu.tar.gz
-19dd0f6e8923321d4daa3f486856afc9  cargo-nightly-x86_64-unknown-linux-gnu.tar.gz
-4a2fd122d84656b5b7eb932eba6d8140  rust-installer-c37d3747da75c280237dc2d6b925078e69555499.tar.gz
-ca003304af0bbc8d7d36b3aaba7df634  cargo-nightly-aarch64-unknown-linux-gnu.tar.gz
+d789a7785e37a1f299b24bc4b57f98ff  cargo-0.14.0.tar.gz
+11f4e5d2c0908e9644045ed643490a98  cargo-0.14.0-vendor.tar.xz
+c7685ef02a5d8ef93f54cdfbc05db4cc  cargo-nightly-aarch64-unknown-linux-gnu.tar.gz
+4dc6b53822b0bbc7b8abaeda3023abb1  cargo-nightly-armv7-unknown-linux-gnueabihf.tar.gz
+dfc61b5e3200b56fa8d10d89601b9461  cargo-nightly-i686-unknown-linux-gnu.tar.gz
+49aee9014eadc64a5e9e386fe7981cf6  cargo-nightly-x86_64-unknown-linux-gnu.tar.gz
+a222edd3ab08779f527aafe862207027  rust-installer-4f994850808a572e2cc8d43f968893c8e942e9bf.tar.gz
