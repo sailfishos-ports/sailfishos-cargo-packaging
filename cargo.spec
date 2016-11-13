@@ -6,7 +6,7 @@
 
 Name:           cargo
 Version:        0.14.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -32,6 +32,8 @@ Source13:       %{bootstrap_base}-aarch64-unknown-linux-gnu.tar.gz
 # want to link to.  With our -devel buildreqs in place, they'll be used instead.
 # FIXME: These should all eventually be packaged on their own!
 Source100:      %{name}-%{version}-vendor.tar.xz
+
+Patch1:         cargo-0.14.0-release-num.patch
 
 # Only x86_64 and i686 are Tier 1 platforms at this time.
 ExclusiveArch:  x86_64 i686 armv7hl aarch64
@@ -80,6 +82,8 @@ and ensure that you'll always get a repeatable build.
 
 %prep
 %setup -q
+
+%patch1 -p1 -b .release-num
 
 # rust-installer
 %setup -q -T -D -a 1
@@ -170,6 +174,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Sun Nov 13 2016 Josh Stone <jistone@redhat.com> - 0.14.0-2
+- Fix CFG_RELEASE_NUM
+
 * Thu Nov 10 2016 Josh Stone <jistone@redhat.com> - 0.14.0-1
 - Update to 0.14.0.
 - Use hardening flags for linking.
