@@ -63,7 +63,7 @@ BuildRequires:  libssh2-devel
 BuildRequires:  zlib-devel
 BuildRequires:  pkgconfig
 
-%if 0%{fedora} >= 26
+%if 0%{?fedora} >= 26
 # https://bugzilla.redhat.com/show_bug.cgi?id=1383778
 BuildRequires:  compat-openssl10-devel
 %else
