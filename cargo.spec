@@ -1,7 +1,6 @@
 # Only x86_64 and i686 are Tier 1 platforms at this time.
 # https://forge.rust-lang.org/platform-support.html
-#global rust_arches x86_64 i686 armv7hl aarch64 ppc64 ppc64le s390x
-%global rust_arches x86_64 i686 armv7hl aarch64
+%global rust_arches x86_64 i686 armv7hl aarch64 ppc64 ppc64le s390x
 
 # To bootstrap from scratch, set the date from src/snapshots.txt
 # e.g. 0.11.0 wants 2016-03-21
