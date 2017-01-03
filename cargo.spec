@@ -1,15 +1,24 @@
+# Only x86_64 and i686 are Tier 1 platforms at this time.
+# https://forge.rust-lang.org/platform-support.html
+#global rust_arches x86_64 i686 armv7hl aarch64 ppc64 ppc64le s390x
+%global rust_arches x86_64 i686 armv7hl aarch64
+
 # To bootstrap from scratch, set the date from src/snapshots.txt
 # e.g. 0.11.0 wants 2016-03-21
-%bcond_with bootstrap
-%global bootstrap_date 2016-08-20
+%global bootstrap_date 2016-11-02
 # (using a newer version than required to get vendor directories and more archs)
 
+# Only the specified arches will use bootstrap binaries.
+#global bootstrap_arches %%{rust_arches}
+%global bootstrap_arches ppc64 ppc64le s390x
+
 Name:           cargo
-Version:        0.14.0
-Release:        2%{?dist}
+Version:        0.15.0
+Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
+ExclusiveArch:  %{rust_arches}
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{version}/%{name}-%{version}.tar.gz
 
@@ -17,13 +26,42 @@ Source0:        https://github.com/rust-lang/%{name}/archive/%{version}/%{name}-
 %global rust_installer 4f994850808a572e2cc8d43f968893c8e942e9bf
 Source1:        https://github.com/rust-lang/rust-installer/archive/%{rust_installer}/rust-installer-%{rust_installer}.tar.gz
 
-%if %with bootstrap
-%global bootstrap_dist https://static.rust-lang.org/cargo-dist
-%global bootstrap_base %{bootstrap_dist}/%{bootstrap_date}/%{name}-nightly
-Source10:       %{bootstrap_base}-x86_64-unknown-linux-gnu.tar.gz
-Source11:       %{bootstrap_base}-i686-unknown-linux-gnu.tar.gz
-Source12:       %{bootstrap_base}-armv7-unknown-linux-gnueabihf.tar.gz
-Source13:       %{bootstrap_base}-aarch64-unknown-linux-gnu.tar.gz
+# Get the Rust triple for any arch.
+%{lua: function rust_triple(arch)
+  local abi = "gnu"
+  if arch == "armv7hl" then
+    arch = "armv7"
+    abi = "gnueabihf"
+  elseif arch == "ppc64" then
+    arch = "powerpc64"
+  elseif arch == "ppc64le" then
+    arch = "powerpc64le"
+  end
+  return arch.."-unknown-linux-"..abi
+end}
+
+%global rust_triple %{lua: print(rust_triple(rpm.expand("%{_target_cpu}")))}
+
+%if %defined bootstrap_arches
+# For each bootstrap arch, add an additional binary Source.
+# Also define bootstrap_source just for the current target.
+%{lua: do
+  local bootstrap_arches = {}
+  for arch in string.gmatch(rpm.expand("%{bootstrap_arches}"), "%S+") do
+    table.insert(bootstrap_arches, arch)
+  end
+  local base = rpm.expand("https://static.rust-lang.org/cargo-dist"
+                          .."/%{bootstrap_date}/cargo-nightly")
+  local target_arch = rpm.expand("%{_target_cpu}")
+  for i, arch in ipairs(bootstrap_arches) do
+    i = i + 10
+    print(string.format("Source%d: %s-%s.tar.gz\n",
+                        i, base, rust_triple(arch)))
+    if arch == target_arch then
+      rpm.define("bootstrap_source "..i)
+    end
+  end
+end}
 %endif
 
 # Use vendored crate dependencies so we can build offline.
@@ -33,16 +71,6 @@ Source13:       %{bootstrap_base}-aarch64-unknown-linux-gnu.tar.gz
 # FIXME: These should all eventually be packaged on their own!
 Source100:      %{name}-%{version}-vendor.tar.xz
 
-Patch1:         cargo-0.14.0-release-num.patch
-
-# Only x86_64 and i686 are Tier 1 platforms at this time.
-ExclusiveArch:  x86_64 i686 armv7hl aarch64
-%ifarch armv7hl
-%global rust_triple armv7-unknown-linux-gnueabihf
-%else
-%global rust_triple %{_target_cpu}-unknown-linux-gnu
-%endif
-
 BuildRequires:  rust
 BuildRequires:  make
 BuildRequires:  cmake
@@ -50,27 +78,21 @@ BuildRequires:  gcc
 BuildRequires:  python2 >= 2.7
 BuildRequires:  curl
 
-%if %without bootstrap
+%ifarch %{bootstrap_arches}
+%global bootstrap_root cargo-nightly-%{rust_triple}
+%global local_cargo %{_builddir}/%{bootstrap_root}/cargo/bin/cargo
+%else
 BuildRequires:  %{name} >= 0.13.0
 %global local_cargo %{_bindir}/%{name}
-%else
-%global bootstrap_root cargo-nightly-%{rust_triple}
-%global local_cargo %{_builddir}/%{name}-%{version}/%{bootstrap_root}/cargo/bin/cargo
 %endif
 
 # Indirect dependencies for vendored -sys crates above
 BuildRequires:  libcurl-devel
 BuildRequires:  libgit2-devel
 BuildRequires:  libssh2-devel
+BuildRequires:  openssl-devel
 BuildRequires:  zlib-devel
 BuildRequires:  pkgconfig
-
-%if 0%{?fedora} >= 26
-# https://bugzilla.redhat.com/show_bug.cgi?id=1383778
-BuildRequires:  compat-openssl10-devel
-%else
-BuildRequires:  openssl-devel
-%endif
 
 # Cargo is not much use without Rust
 Requires:       rust
@@ -81,17 +103,23 @@ and ensure that you'll always get a repeatable build.
 
 
 %prep
-%setup -q
 
-%patch1 -p1 -b .release-num
+%ifarch %{bootstrap_arches}
+%setup -q -n %{bootstrap_root} -T -b %{bootstrap_source}
+test -f '%{local_cargo}'
+%endif
+
+# vendored crates
+%setup -q -n %{name}-%{version}-vendor -T -b 100
+
+# cargo sources
+%setup -q
 
 # rust-installer
 %setup -q -T -D -a 1
 rmdir src/rust-installer
 mv rust-installer-%{rust_installer} src/rust-installer
 
-# vendored crates
-%setup -q -T -D -a 100
 mkdir -p .cargo
 cat >.cargo/config <<EOF
 [source.crates-io]
@@ -99,19 +127,14 @@ registry = 'https://github.com/rust-lang/crates.io-index'
 replace-with = 'vendored-sources'
 
 [source.vendored-sources]
-directory = '$PWD/vendor'
+directory = '$PWD/../%{name}-%{version}-vendor'
 EOF
-
-%if %with bootstrap
-find %{sources} -name '%{bootstrap_root}.tar.gz' -exec tar -xvzf '{}' ';'
-test -f '%{local_cargo}'
-%endif
 
 
 %build
 
 %ifarch aarch64 %{mips} %{power64}
-%if %with bootstrap
+%ifarch %{bootstrap_arches}
 # Upstream binaries have a 4k-paged jemalloc, which breaks with Fedora 64k pages.
 # See https://github.com/rust-lang/rust/issues/36994
 # Fixed by https://github.com/rust-lang/rust/issues/37392
@@ -126,8 +149,6 @@ export LIBGIT2_SYS_USE_PKG_CONFIG=1
 # use our offline registry
 mkdir -p .cargo
 export CARGO_HOME=$PWD/.cargo
-%undefine _configure_gnuconfig_hack
-%undefine _configure_libtool_hardening_hack
 
 # This should eventually migrate to distro policy
 # Enable optimization, debuginfo, and link hardening.
@@ -135,8 +156,8 @@ export RUSTFLAGS="-C opt-level=3 -g -Clink-args=-Wl,-z,relro,-z,now"
 
 %configure --disable-option-checking \
   --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
-  --local-cargo=%{local_cargo} \
-  --local-rust-root=%{_prefix} \
+  --rustc=%{_bindir}/rustc --rustdoc=%{_bindir}/rustdoc \
+  --cargo=%{local_cargo} \
   %{nil}
 
 %make_build VERBOSE=1
@@ -174,6 +195,11 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Tue Jan 03 2017 Josh Stone <jistone@redhat.com> - 0.15.0-1
+- Update to 0.15.0.
+- Rewrite bootstrap logic to target specific arches.
+- Bootstrap ppc64, ppc64le, s390x.
+
 * Sun Nov 13 2016 Josh Stone <jistone@redhat.com> - 0.14.0-2
 - Fix CFG_RELEASE_NUM
 
