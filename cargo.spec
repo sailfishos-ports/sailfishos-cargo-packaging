@@ -9,11 +9,10 @@
 
 # Only the specified arches will use bootstrap binaries.
 #global bootstrap_arches %%{rust_arches}
-%global bootstrap_arches ppc64 ppc64le s390x
 
 Name:           cargo
 Version:        0.15.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -194,6 +193,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Tue Jan 03 2017 Josh Stone <jistone@redhat.com> - 0.15.0-2
+- Rebuild without bootstrap binaries.
+
 * Tue Jan 03 2017 Josh Stone <jistone@redhat.com> - 0.15.0-1
 - Update to 0.15.0.
 - Rewrite bootstrap logic to target specific arches.
