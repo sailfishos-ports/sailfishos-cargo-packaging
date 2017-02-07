@@ -8,7 +8,7 @@
 # (using a newer version than required to get vendor directories and more archs)
 
 # Only the specified arches will use bootstrap binaries.
-#global bootstrap_arches %%{rust_arches}
+%global bootstrap_arches %%{rust_arches}
 
 Name:           cargo
 Version:        0.15.0
