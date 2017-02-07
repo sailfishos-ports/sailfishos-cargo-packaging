@@ -12,7 +12,7 @@
 
 Name:           cargo
 Version:        0.15.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -193,6 +193,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Tue Feb 07 2017 Igor Gnatenko <ignatenko@redhat.com> - 0.15.0-3
+- Rebuild for libgit2-0.25.x
+
 * Tue Jan 03 2017 Josh Stone <jistone@redhat.com> - 0.15.0-2
 - Rebuild without bootstrap binaries.
 
