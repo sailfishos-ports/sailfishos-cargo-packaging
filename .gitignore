@@ -18,3 +18,12 @@
 /cargo-nightly-powerpc64-unknown-linux-gnu.tar.gz
 /cargo-nightly-s390x-unknown-linux-gnu.tar.gz
 /cargo-0.15.0.tar.gz
+/cargo-0.16.0.tar.gz
+/cargo-0.16.0-aarch64-unknown-linux-gnu.tar.gz
+/cargo-0.16.0-armv7-unknown-linux-gnueabihf.tar.gz
+/cargo-0.16.0-i686-unknown-linux-gnu.tar.gz
+/cargo-0.16.0-powerpc64le-unknown-linux-gnu.tar.gz
+/cargo-0.16.0-powerpc64-unknown-linux-gnu.tar.gz
+/cargo-0.16.0-s390x-unknown-linux-gnu.tar.gz
+/cargo-0.16.0-x86_64-unknown-linux-gnu.tar.gz
+/cargo-0.16.0-vendor.tar.xz

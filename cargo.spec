@@ -2,17 +2,18 @@
 # https://forge.rust-lang.org/platform-support.html
 %global rust_arches x86_64 i686 armv7hl aarch64 ppc64 ppc64le s390x
 
-# To bootstrap from scratch, set the date from src/snapshots.txt
-# e.g. 0.11.0 wants 2016-03-21
-%global bootstrap_date 2016-11-02
-# (using a newer version than required to get vendor directories and more archs)
-
 # Only the specified arches will use bootstrap binaries.
 #global bootstrap_arches %%{rust_arches}
 
+%if 0%{?rhel}
+%bcond_without bundled_libgit2
+%else
+%bcond_with bundled_libgit2
+%endif
+
 Name:           cargo
-Version:        0.15.0
-Release:        4%{?dist}
+Version:        0.16.0
+Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -48,8 +49,7 @@ end}
   for arch in string.gmatch(rpm.expand("%{bootstrap_arches}"), "%S+") do
     table.insert(bootstrap_arches, arch)
   end
-  local base = rpm.expand("https://static.rust-lang.org/cargo-dist"
-                          .."/%{bootstrap_date}/cargo-nightly")
+  local base = rpm.expand("https://static.rust-lang.org/dist/cargo-%{version}")
   local target_arch = rpm.expand("%{_target_cpu}")
   for i, arch in ipairs(bootstrap_arches) do
     i = i + 10
@@ -73,8 +73,6 @@ BuildRequires:  rust
 BuildRequires:  make
 BuildRequires:  cmake
 BuildRequires:  gcc
-BuildRequires:  python2 >= 2.7
-BuildRequires:  curl
 
 %ifarch %{bootstrap_arches}
 %global bootstrap_root cargo-nightly-%{rust_triple}
@@ -86,11 +84,16 @@ BuildRequires:  %{name} >= 0.13.0
 
 # Indirect dependencies for vendored -sys crates above
 BuildRequires:  libcurl-devel
-BuildRequires:  libgit2-devel
 BuildRequires:  libssh2-devel
 BuildRequires:  openssl-devel
 BuildRequires:  zlib-devel
 BuildRequires:  pkgconfig
+
+%if %with bundled_libgit2
+Provides:       bundled(libgit2) = 0.24.0
+%else
+BuildRequires:  libgit2-devel >= 0.24
+%endif
 
 # Cargo is not much use without Rust
 Requires:       rust
@@ -131,18 +134,10 @@ EOF
 
 %build
 
-%ifarch aarch64 %{mips} %{power64}
-%ifarch %{bootstrap_arches}
-# Upstream binaries have a 4k-paged jemalloc, which breaks with Fedora 64k pages.
-# See https://github.com/rust-lang/rust/issues/36994
-# Fixed by https://github.com/rust-lang/rust/issues/37392
-# So we can remove this when bootstrap reaches Rust 1.14.0, Cargo ~0.15.0.
-export MALLOC_CONF=lg_dirty_mult:-1
-%endif
-%endif
-
+%if %without bundled_libgit2
 # convince libgit2-sys to use the distro libgit2
 export LIBGIT2_SYS_USE_PKG_CONFIG=1
+%endif
 
 # use our offline registry
 mkdir -p .cargo
@@ -150,12 +145,13 @@ export CARGO_HOME=$PWD/.cargo
 
 # This should eventually migrate to distro policy
 # Enable optimization, debuginfo, and link hardening.
-export RUSTFLAGS="-C opt-level=3 -g -Clink-args=-Wl,-z,relro,-z,now"
+export RUSTFLAGS="-C opt-level=3 -g -Clink-arg=-Wl,-z,relro,-z,now"
 
 %configure --disable-option-checking \
   --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
   --rustc=%{_bindir}/rustc --rustdoc=%{_bindir}/rustdoc \
   --cargo=%{local_cargo} \
+  --release-channel=stable \
   %{nil}
 
 %make_build VERBOSE=1
@@ -193,6 +189,11 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Thu Feb 09 2017 Josh Stone <jistone@redhat.com> - 0.16.0-1
+- Update to 0.16.0.
+- Start using the current upstream release for bootstrap.
+- Merge and clean up conditionals for epel7.
+
 * Tue Feb 07 2017 Igor Gnatenko <ignatenko@redhat.com> - 0.15.0-4
 - Disable bootstrap
 
