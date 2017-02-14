@@ -13,13 +13,17 @@
 
 Name:           cargo
 Version:        0.16.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
 ExclusiveArch:  %{rust_arches}
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{version}/%{name}-%{version}.tar.gz
+# Expose description in cargo metadata
+# https://github.com/rust-lang/cargo/pull/3633
+Patch0001:      0001-Metadata-response-now-also-contains-package-descript.patch
+Patch0002:      0002-Fixed-failing-read-metadata-test-due-to-addition-of-.patch
 
 # submodule, bundled for local installation only, not distributed
 %global rust_installer 4f994850808a572e2cc8d43f968893c8e942e9bf
@@ -115,6 +119,8 @@ test -f '%{local_cargo}'
 
 # cargo sources
 %setup -q
+%patch0001 -p1
+%patch0002 -p1
 
 # rust-installer
 %setup -q -T -D -a 1
@@ -175,10 +181,6 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 #make test VERBOSE=1
 
 
-%post -p /sbin/ldconfig
-%postun -p /sbin/ldconfig
-
-
 %files
 %license LICENSE-APACHE LICENSE-MIT LICENSE-THIRD-PARTY
 %doc README.md
@@ -189,6 +191,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Tue Feb 14 2017 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 0.16.0-2
+- Backport patch to expose description in cargo metadata
+
 * Thu Feb 09 2017 Josh Stone <jistone@redhat.com> - 0.16.0-1
 - Update to 0.16.0.
 - Start using the current upstream release for bootstrap.
