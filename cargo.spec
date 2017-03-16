@@ -12,14 +12,18 @@
 %endif
 
 Name:           cargo
-Version:        0.16.0
-Release:        2%{?dist}
+Version:        0.17.0
+Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
 ExclusiveArch:  %{rust_arches}
 
-Source0:        https://github.com/rust-lang/%{name}/archive/%{version}/%{name}-%{version}.tar.gz
+%global cargo_version %{version}
+%global cargo_bootstrap 0.16.0
+
+Source0:        https://github.com/rust-lang/%{name}/archive/%{cargo_version}/%{name}-%{cargo_version}.tar.gz
+
 # Expose description in cargo metadata
 # https://github.com/rust-lang/cargo/pull/3633
 Patch0001:      0001-Metadata-response-now-also-contains-package-descript.patch
@@ -53,7 +57,7 @@ end}
   for arch in string.gmatch(rpm.expand("%{bootstrap_arches}"), "%S+") do
     table.insert(bootstrap_arches, arch)
   end
-  local base = rpm.expand("https://static.rust-lang.org/dist/cargo-%{version}")
+  local base = rpm.expand("https://static.rust-lang.org/dist/cargo-%{cargo_bootstrap}")
   local target_arch = rpm.expand("%{_target_cpu}")
   for i, arch in ipairs(bootstrap_arches) do
     i = i + 10
@@ -118,12 +122,12 @@ test -f '%{local_cargo}'
 %setup -q -n %{name}-%{version}-vendor -T -b 100
 
 # cargo sources
-%setup -q
+%setup -q -n %{name}-%{cargo_version}
 %patch0001 -p1
 %patch0002 -p1
 
 # rust-installer
-%setup -q -T -D -a 1
+%setup -q -n %{name}-%{cargo_version} -T -D -a 1
 rmdir src/rust-installer
 mv rust-installer-%{rust_installer} src/rust-installer
 
@@ -160,11 +164,11 @@ export RUSTFLAGS="-C opt-level=3 -g -Clink-arg=-Wl,-z,relro,-z,now"
   --release-channel=stable \
   %{nil}
 
-%make_build VERBOSE=1
+%make_build %{!?rhel:-Onone}
 
 
 %install
-%make_install VERBOSE=1
+%make_install
 
 # Remove installer artifacts (manifests, uninstall scripts, etc.)
 rm -rv %{buildroot}/%{_prefix}/lib/
@@ -178,7 +182,7 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 %check
 # the tests are more oriented toward in-tree contributors
-#make test VERBOSE=1
+#make test
 
 
 %files
@@ -191,6 +195,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Thu Mar 16 2017 Josh Stone <jistone@redhat.com> - 0.17.0-1
+- Update to 0.16.0.
+
 * Tue Feb 14 2017 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 0.16.0-2
 - Backport patch to expose description in cargo metadata
 
