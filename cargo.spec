@@ -196,7 +196,7 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 %changelog
 * Thu Mar 16 2017 Josh Stone <jistone@redhat.com> - 0.17.0-1
-- Update to 0.16.0.
+- Update to 0.17.0.
 
 * Tue Feb 14 2017 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 0.16.0-2
 - Backport patch to expose description in cargo metadata
