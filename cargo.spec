@@ -12,7 +12,7 @@
 %endif
 
 Name:           cargo
-Version:        0.17.0
+Version:        0.18.0
 Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
@@ -20,14 +20,9 @@ URL:            https://crates.io/
 ExclusiveArch:  %{rust_arches}
 
 %global cargo_version %{version}
-%global cargo_bootstrap 0.16.0
+%global cargo_bootstrap 0.17.0
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{cargo_version}/%{name}-%{cargo_version}.tar.gz
-
-# Expose description in cargo metadata
-# https://github.com/rust-lang/cargo/pull/3633
-Patch0001:      0001-Metadata-response-now-also-contains-package-descript.patch
-Patch0002:      0002-Fixed-failing-read-metadata-test-due-to-addition-of-.patch
 
 # submodule, bundled for local installation only, not distributed
 %global rust_installer 4f994850808a572e2cc8d43f968893c8e942e9bf
@@ -123,8 +118,6 @@ test -f '%{local_cargo}'
 
 # cargo sources
 %setup -q -n %{name}-%{cargo_version}
-%patch0001 -p1
-%patch0002 -p1
 
 # rust-installer
 %setup -q -n %{name}-%{cargo_version} -T -D -a 1
@@ -195,6 +188,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Thu Apr 27 2017 Josh Stone <jistone@redhat.com> - 0.18.0-1
+- Update to 0.18.0.
+
 * Thu Mar 16 2017 Josh Stone <jistone@redhat.com> - 0.17.0-1
 - Update to 0.17.0.
 
