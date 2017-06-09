@@ -12,7 +12,7 @@
 %endif
 
 Name:           cargo
-Version:        0.18.0
+Version:        0.19.0
 Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
@@ -20,7 +20,7 @@ URL:            https://crates.io/
 ExclusiveArch:  %{rust_arches}
 
 %global cargo_version %{version}
-%global cargo_bootstrap 0.17.0
+%global cargo_bootstrap 0.18.0
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{cargo_version}/%{name}-%{cargo_version}.tar.gz
 
@@ -66,7 +66,7 @@ end}
 %endif
 
 # Use vendored crate dependencies so we can build offline.
-# Created using https://github.com/alexcrichton/cargo-vendor/ 0.1.3
+# Created using https://github.com/alexcrichton/cargo-vendor/ 0.1.7
 # It's so big because some of the -sys crates include the C library source they
 # want to link to.  With our -devel buildreqs in place, they'll be used instead.
 # FIXME: These should all eventually be packaged on their own!
@@ -78,7 +78,7 @@ BuildRequires:  cmake
 BuildRequires:  gcc
 
 %ifarch %{bootstrap_arches}
-%global bootstrap_root cargo-nightly-%{rust_triple}
+%global bootstrap_root cargo-%{cargo_bootstrap}-%{rust_triple}
 %global local_cargo %{_builddir}/%{bootstrap_root}/cargo/bin/cargo
 %else
 BuildRequires:  %{name} >= 0.13.0
@@ -188,6 +188,9 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %changelog
+* Fri Jun 09 2017 Josh Stone <jistone@redhat.com> - 0.19.0-1
+- Update to 0.19.0.
+
 * Thu Apr 27 2017 Josh Stone <jistone@redhat.com> - 0.18.0-1
 - Update to 0.18.0.
 
