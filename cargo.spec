@@ -93,7 +93,7 @@ BuildRequires:  zlib-devel
 BuildRequires:  pkgconfig
 
 %if %with bundled_libgit2
-Provides:       bundled(libgit2) = 0.24.0
+Provides:       bundled(libgit2) = 0.25.0
 %else
 BuildRequires:  libgit2-devel >= 0.24
 %endif
