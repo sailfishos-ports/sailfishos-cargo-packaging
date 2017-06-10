@@ -124,7 +124,9 @@ test -f '%{local_cargo}'
 rmdir src/rust-installer
 mv rust-installer-%{rust_installer} src/rust-installer
 
-mkdir -p .cargo
+# define the offline registry
+%global cargo_home $PWD/.cargo
+mkdir -p %{cargo_home}
 cat >.cargo/config <<EOF
 [source.crates-io]
 registry = 'https://github.com/rust-lang/crates.io-index'
@@ -134,6 +136,9 @@ replace-with = 'vendored-sources'
 directory = '$PWD/../%{name}-%{version}-vendor'
 EOF
 
+# This should eventually migrate to distro policy
+# Enable optimization, debuginfo, and link hardening.
+%global rustflags -Copt-level=3 -Cdebuginfo=2 -Clink-arg=-Wl,-z,relro,-z,now
 
 %build
 
@@ -142,25 +147,25 @@ EOF
 export LIBGIT2_SYS_USE_PKG_CONFIG=1
 %endif
 
-# use our offline registry
-mkdir -p .cargo
-export CARGO_HOME=$PWD/.cargo
-
-# This should eventually migrate to distro policy
-# Enable optimization, debuginfo, and link hardening.
-export RUSTFLAGS="-C opt-level=3 -g -Clink-arg=-Wl,-z,relro,-z,now"
+# use our offline registry and custom rustc flags
+export CARGO_HOME="%{cargo_home}"
+export RUSTFLAGS="%{rustflags}"
 
 %configure --disable-option-checking \
   --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
   --rustc=%{_bindir}/rustc --rustdoc=%{_bindir}/rustdoc \
   --cargo=%{local_cargo} \
   --release-channel=stable \
+  --disable-cross-tests \
   %{nil}
 
-%make_build %{!?rhel:-Onone}
+make %{_smp_mflags}
 
 
 %install
+export CARGO_HOME="%{cargo_home}"
+export RUSTFLAGS="%{rustflags}"
+
 %make_install
 
 # Remove installer artifacts (manifests, uninstall scripts, etc.)
@@ -174,8 +179,12 @@ rm -rf %{buildroot}/%{_docdir}/%{name}/
 
 
 %check
-# the tests are more oriented toward in-tree contributors
-#make test
+export CARGO_HOME="%{cargo_home}"
+export RUSTFLAGS="%{rustflags}"
+
+# the testsuite run in parallel itself
+# some tests are known to fail exact output due to libgit2 differences
+make test || :
 
 
 %files
