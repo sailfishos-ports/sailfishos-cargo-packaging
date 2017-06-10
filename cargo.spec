@@ -5,7 +5,7 @@
 # Only the specified arches will use bootstrap binaries.
 #global bootstrap_arches %%{rust_arches}
 
-%if 0%{?rhel}
+%if 0%{?rhel} && !0%{?epel}
 %bcond_without bundled_libgit2
 %else
 %bcond_with bundled_libgit2
