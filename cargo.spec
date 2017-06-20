@@ -13,7 +13,7 @@
 
 Name:           cargo
 Version:        0.19.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -169,13 +169,16 @@ export RUSTFLAGS="%{rustflags}"
 %make_install
 
 # Remove installer artifacts (manifests, uninstall scripts, etc.)
-rm -rv %{buildroot}/%{_prefix}/lib/
+rm -rv %{buildroot}%{_prefix}/lib/
 
 # Fix the etc/ location
-mv -v %{buildroot}/%{_prefix}/%{_sysconfdir} %{buildroot}/%{_sysconfdir}
+mv -v %{buildroot}%{_prefix}/%{_sysconfdir} %{buildroot}%{_sysconfdir}
 
 # Remove unwanted documentation files (we already package them)
-rm -rf %{buildroot}/%{_docdir}/%{name}/
+rm -rf %{buildroot}%{_docdir}/%{name}/
+
+# Create the path for crate-devel packages
+mkdir -p %{buildroot}%{_datadir}/cargo/registry
 
 
 %check
@@ -194,9 +197,14 @@ make test || :
 %{_mandir}/man1/cargo*.1*
 %{_sysconfdir}/bash_completion.d/cargo
 %{_datadir}/zsh/site-functions/_cargo
+%dir %{_datadir}/cargo
+%dir %{_datadir}/cargo/registry
 
 
 %changelog
+* Tue Jun 20 2017 Josh Stone <jistone@redhat.com> - 0.19.0-2
+- Create /usr/share/cargo/registry for crate-devel packages
+
 * Fri Jun 09 2017 Josh Stone <jistone@redhat.com> - 0.19.0-1
 - Update to 0.19.0.
 
