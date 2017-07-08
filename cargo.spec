@@ -3,7 +3,7 @@
 %global rust_arches x86_64 i686 armv7hl aarch64 ppc64 ppc64le s390x
 
 # Only the specified arches will use bootstrap binaries.
-#global bootstrap_arches %%{rust_arches}
+%global bootstrap_arches %%{rust_arches}
 
 %if 0%{?rhel} && !0%{?epel}
 %bcond_without bundled_libgit2
