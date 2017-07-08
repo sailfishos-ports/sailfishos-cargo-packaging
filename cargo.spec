@@ -13,7 +13,7 @@
 
 Name:           cargo
 Version:        0.19.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -202,6 +202,9 @@ make test || :
 
 
 %changelog
+* Sat Jul 08 2017 Igor Gnatenko <ignatenko@redhat.com> - 0.19.0-3
+- Rebuild for libgit2 0.26.x
+
 * Tue Jun 20 2017 Josh Stone <jistone@redhat.com> - 0.19.0-2
 - Create /usr/share/cargo/registry for crate-devel packages
 
