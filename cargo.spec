@@ -12,21 +12,17 @@
 %endif
 
 Name:           cargo
-Version:        0.19.0
-Release:        4%{?dist}
+Version:        0.20.0
+Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
 ExclusiveArch:  %{rust_arches}
 
 %global cargo_version %{version}
-%global cargo_bootstrap 0.18.0
+%global cargo_bootstrap 0.19.0
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{cargo_version}/%{name}-%{cargo_version}.tar.gz
-
-# submodule, bundled for local installation only, not distributed
-%global rust_installer 4f994850808a572e2cc8d43f968893c8e942e9bf
-Source1:        https://github.com/rust-lang/rust-installer/archive/%{rust_installer}/rust-installer-%{rust_installer}.tar.gz
 
 # Get the Rust triple for any arch.
 %{lua: function rust_triple(arch)
@@ -80,6 +76,7 @@ BuildRequires:  gcc
 %ifarch %{bootstrap_arches}
 %global bootstrap_root cargo-%{cargo_bootstrap}-%{rust_triple}
 %global local_cargo %{_builddir}/%{bootstrap_root}/cargo/bin/cargo
+Provides:       bundled(%{name}-bootstrap) = %{cargo_bootstrap}
 %else
 BuildRequires:  %{name} >= 0.13.0
 %global local_cargo %{_bindir}/%{name}
@@ -106,6 +103,14 @@ Cargo is a tool that allows Rust projects to declare their various dependencies
 and ensure that you'll always get a repeatable build.
 
 
+%package doc
+Summary:        Documentation for Cargo
+BuildArch:      noarch
+
+%description doc
+This package includes HTML documentation for Cargo.
+
+
 %prep
 
 %ifarch %{bootstrap_arches}
@@ -113,16 +118,11 @@ and ensure that you'll always get a repeatable build.
 test -f '%{local_cargo}'
 %endif
 
-# vendored crates
-%setup -q -n %{name}-%{version}-vendor -T -b 100
-
 # cargo sources
 %setup -q -n %{name}-%{cargo_version}
 
-# rust-installer
-%setup -q -n %{name}-%{cargo_version} -T -D -a 1
-rmdir src/rust-installer
-mv rust-installer-%{rust_installer} src/rust-installer
+# vendored crates
+%setup -q -T -D -a 100
 
 # define the offline registry
 %global cargo_home $PWD/.cargo
@@ -133,7 +133,7 @@ registry = 'https://github.com/rust-lang/crates.io-index'
 replace-with = 'vendored-sources'
 
 [source.vendored-sources]
-directory = '$PWD/../%{name}-%{version}-vendor'
+directory = '$PWD/vendor'
 EOF
 
 # This should eventually migrate to distro policy
@@ -151,43 +151,45 @@ export LIBGIT2_SYS_USE_PKG_CONFIG=1
 export CARGO_HOME="%{cargo_home}"
 export RUSTFLAGS="%{rustflags}"
 
-%configure --disable-option-checking \
-  --build=%{rust_triple} --host=%{rust_triple} --target=%{rust_triple} \
-  --rustc=%{_bindir}/rustc --rustdoc=%{_bindir}/rustdoc \
-  --cargo=%{local_cargo} \
-  --release-channel=stable \
-  --disable-cross-tests \
-  %{nil}
+# cargo no longer uses a configure script, but we still want to use
+# CFLAGS in case of the odd C file in vendored dependencies.
+%{?__global_cflags:export CFLAGS="%{__global_cflags}"}
+%{!?__global_cflags:%{?optflags:export CFLAGS="%{optflags}"}}
+%{?__global_ldflags:export LDFLAGS="%{__global_ldflags}"}
 
-make %{_smp_mflags}
+%{local_cargo} build --release
+sh src/ci/dox.sh
 
 
 %install
 export CARGO_HOME="%{cargo_home}"
 export RUSTFLAGS="%{rustflags}"
 
-%make_install
+%{local_cargo} install --root %{buildroot}%{_prefix}
+rm %{buildroot}%{_prefix}/.crates.toml
 
-# Remove installer artifacts (manifests, uninstall scripts, etc.)
-rm -rv %{buildroot}%{_prefix}/lib/
+%{__install} -p -m644 src/etc/man/cargo*.1 \
+  -D -t %{buildroot}%{_mandir}/man1 
 
-# Fix the etc/ location
-mv -v %{buildroot}%{_prefix}/%{_sysconfdir} %{buildroot}%{_sysconfdir}
+%{__install} -p -m644 src/etc/cargo.bashcomp.sh \
+  -D %{buildroot}%{_sysconfdir}/bash_completion.d/cargo
 
-# Remove unwanted documentation files (we already package them)
-rm -rf %{buildroot}%{_docdir}/%{name}/
+%{__install} -p -m644 src/etc/_cargo \
+  -D %{buildroot}%{_datadir}/zsh/site-functions/_cargo
 
 # Create the path for crate-devel packages
 mkdir -p %{buildroot}%{_datadir}/cargo/registry
+
+mkdir -p %{buildroot}%{_docdir}/cargo
+cp -a target/doc %{buildroot}%{_docdir}/cargo/html
 
 
 %check
 export CARGO_HOME="%{cargo_home}"
 export RUSTFLAGS="%{rustflags}"
 
-# the testsuite run in parallel itself
 # some tests are known to fail exact output due to libgit2 differences
-make test || :
+CFG_DISABLE_CROSS_TESTS=1 %{local_cargo} test --no-fail-fast || :
 
 
 %files
@@ -200,8 +202,15 @@ make test || :
 %dir %{_datadir}/cargo
 %dir %{_datadir}/cargo/registry
 
+%files doc
+%{_docdir}/cargo/html
+
 
 %changelog
+* Fri Jul 21 2017 Josh Stone <jistone@redhat.com> - 0.20.0-1
+- Update to 0.20.0.
+- Add a cargo-doc subpackage.
+
 * Sat Jul 08 2017 Igor Gnatenko <ignatenko@redhat.com> - 0.19.0-4
 - Disable bootstrap
 
