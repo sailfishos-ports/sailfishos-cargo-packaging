@@ -168,8 +168,9 @@ export RUSTFLAGS="%{rustflags}"
 %{local_cargo} install --root %{buildroot}%{_prefix}
 rm %{buildroot}%{_prefix}/.crates.toml
 
+mkdir -p %{buildroot}%{_mandir}/man1
 %{__install} -p -m644 src/etc/man/cargo*.1 \
-  -D -t %{buildroot}%{_mandir}/man1 
+  -t %{buildroot}%{_mandir}/man1
 
 %{__install} -p -m644 src/etc/cargo.bashcomp.sh \
   -D %{buildroot}%{_sysconfdir}/bash_completion.d/cargo
