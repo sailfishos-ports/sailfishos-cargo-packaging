@@ -13,7 +13,7 @@
 
 Name:           cargo
 Version:        0.20.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
@@ -208,6 +208,9 @@ CFG_DISABLE_CROSS_TESTS=1 %{local_cargo} test --no-fail-fast || :
 
 
 %changelog
+* Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 0.20.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
 * Fri Jul 21 2017 Josh Stone <jistone@redhat.com> - 0.20.0-1
 - Update to 0.20.0.
 - Add a cargo-doc subpackage.
