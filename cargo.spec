@@ -12,15 +12,15 @@
 %endif
 
 Name:           cargo
-Version:        0.20.0
-Release:        3%{?dist}
+Version:        0.21.0
+Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
 URL:            https://crates.io/
 ExclusiveArch:  %{rust_arches}
 
 %global cargo_version %{version}
-%global cargo_bootstrap 0.19.0
+%global cargo_bootstrap 0.20.0
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{cargo_version}/%{name}-%{cargo_version}.tar.gz
 
@@ -52,7 +52,7 @@ end}
   local target_arch = rpm.expand("%{_target_cpu}")
   for i, arch in ipairs(bootstrap_arches) do
     i = i + 10
-    print(string.format("Source%d: %s-%s.tar.gz\n",
+    print(string.format("Source%d: %s-%s.tar.xz\n",
                         i, base, rust_triple(arch)))
     if arch == target_arch then
       rpm.define("bootstrap_source "..i)
@@ -62,7 +62,7 @@ end}
 %endif
 
 # Use vendored crate dependencies so we can build offline.
-# Created using https://github.com/alexcrichton/cargo-vendor/ 0.1.7
+# Created using https://github.com/alexcrichton/cargo-vendor/ 0.1.11
 # It's so big because some of the -sys crates include the C library source they
 # want to link to.  With our -devel buildreqs in place, they'll be used instead.
 # FIXME: These should all eventually be packaged on their own!
@@ -208,6 +208,9 @@ CFG_DISABLE_CROSS_TESTS=1 %{local_cargo} test --no-fail-fast || :
 
 
 %changelog
+* Thu Aug 31 2017 Josh Stone <jistone@redhat.com> - 0.21.0-1
+- Update to 0.21.0.
+
 * Wed Aug 02 2017 Fedora Release Engineering <releng@fedoraproject.org> - 0.20.0-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
 
