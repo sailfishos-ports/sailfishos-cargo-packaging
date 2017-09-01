@@ -24,6 +24,8 @@ ExclusiveArch:  %{rust_arches}
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{cargo_version}/%{name}-%{cargo_version}.tar.gz
 
+Patch1:         cargo-0.21.0-libc-0.2.26-s390x.patch
+
 # Get the Rust triple for any arch.
 %{lua: function rust_triple(arch)
   local abi = "gnu"
@@ -123,6 +125,8 @@ test -f '%{local_cargo}'
 
 # vendored crates
 %setup -q -T -D -a 100
+
+%patch1 -p1 -b .libc-s390x
 
 # define the offline registry
 %global cargo_home $PWD/.cargo
