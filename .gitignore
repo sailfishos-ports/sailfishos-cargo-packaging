@@ -65,3 +65,5 @@
 /cargo-0.20.0-powerpc64-unknown-linux-gnu.tar.xz
 /cargo-0.20.0-s390x-unknown-linux-gnu.tar.xz
 /cargo-0.20.0-x86_64-unknown-linux-gnu.tar.xz
+/cargo-0.21.1.tar.gz
+/cargo-0.21.1-vendor.tar.xz
