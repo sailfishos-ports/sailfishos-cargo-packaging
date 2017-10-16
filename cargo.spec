@@ -12,7 +12,7 @@
 %endif
 
 Name:           cargo
-Version:        0.21.1
+Version:        0.22.0
 Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
@@ -20,11 +20,9 @@ URL:            https://crates.io/
 ExclusiveArch:  %{rust_arches}
 
 %global cargo_version %{version}
-%global cargo_bootstrap 0.20.0
+%global cargo_bootstrap 0.21.0
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{cargo_version}/%{name}-%{cargo_version}.tar.gz
-
-Patch1:         cargo-0.21.1-libc-0.2.26-s390x.patch
 
 # Get the Rust triple for any arch.
 %{lua: function rust_triple(arch)
@@ -124,9 +122,7 @@ test -f '%{local_cargo}'
 %setup -q -n %{name}-%{cargo_version}
 
 # vendored crates
-%setup -q -T -D -a 100
-
-%patch1 -p1 -b .libc-s390x
+%setup -q -n %{name}-%{cargo_version} -T -D -a 100
 
 # define the offline registry
 %global cargo_home $PWD/.cargo
@@ -212,6 +208,9 @@ CFG_DISABLE_CROSS_TESTS=1 %{local_cargo} test --no-fail-fast || :
 
 
 %changelog
+* Mon Oct 16 2017 Josh Stone <jistone@redhat.com> - 0.22.0-1
+- Update to 0.22.0
+
 * Mon Sep 11 2017 Josh Stone <jistone@redhat.com> - 0.21.1-1
 - Update to 0.21.1.
 
