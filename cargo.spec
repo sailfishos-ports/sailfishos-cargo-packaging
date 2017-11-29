@@ -12,7 +12,7 @@
 %endif
 
 Name:           cargo
-Version:        0.22.0
+Version:        0.23.0
 Release:        1%{?dist}
 Summary:        Rust's package manager and build tool
 License:        ASL 2.0 or MIT
@@ -20,9 +20,11 @@ URL:            https://crates.io/
 ExclusiveArch:  %{rust_arches}
 
 %global cargo_version %{version}
-%global cargo_bootstrap 0.21.0
+%global cargo_bootstrap 0.22.0
 
 Source0:        https://github.com/rust-lang/%{name}/archive/%{cargo_version}/%{name}-%{cargo_version}.tar.gz
+
+Patch1:         cargo-0.23.0-disable-mdbook.patch
 
 # Get the Rust triple for any arch.
 %{lua: function rust_triple(arch)
@@ -62,7 +64,7 @@ end}
 %endif
 
 # Use vendored crate dependencies so we can build offline.
-# Created using https://github.com/alexcrichton/cargo-vendor/ 0.1.12
+# Created using https://github.com/alexcrichton/cargo-vendor/ 0.1.13
 # It's so big because some of the -sys crates include the C library source they
 # want to link to.  With our -devel buildreqs in place, they'll be used instead.
 # FIXME: These should all eventually be packaged on their own!
@@ -123,6 +125,8 @@ test -f '%{local_cargo}'
 
 # vendored crates
 %setup -q -n %{name}-%{cargo_version} -T -D -a 100
+
+%autopatch -p1
 
 # define the offline registry
 %global cargo_home $PWD/.cargo
@@ -208,8 +212,11 @@ CFG_DISABLE_CROSS_TESTS=1 %{local_cargo} test --no-fail-fast || :
 
 
 %changelog
+* Wed Nov 29 2017 Josh Stone <jistone@redhat.com> - 0.23.0-1
+- Update to 0.23.0.
+
 * Mon Oct 16 2017 Josh Stone <jistone@redhat.com> - 0.22.0-1
-- Update to 0.22.0
+- Update to 0.22.0.
 
 * Mon Sep 11 2017 Josh Stone <jistone@redhat.com> - 0.21.1-1
 - Update to 0.21.1.
