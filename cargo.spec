@@ -4,7 +4,7 @@
 %global rust_triple armv7-unknown-linux-gnueabihf
 %endif
 
-Name:           cargo
+Name:           cargo023
 Version:        0.23.0
 Release:        2
 Summary:        Rust's package manager and build tool
@@ -12,7 +12,7 @@ License:        ASL 2.0 or MIT
 URL:            https://crates.io/
 ExclusiveArch:  i486 armv7hl
 
-Source0:        https://github.com/rust-lang/%{name}/archive/%{version}/%{name}-%{version}.tar.gz
+Source0:        https://github.com/rust-lang/cargo/archive/%{version}/cargo-%{version}.tar.gz
 Patch1:         cargo-0.23.0-disable-mdbook.patch
 
 # Use vendored crate dependencies so we can build offline.
@@ -20,11 +20,11 @@ Patch1:         cargo-0.23.0-disable-mdbook.patch
 # It's so big because some of the -sys crates include the C library source they
 # want to link to.  With our -devel buildreqs in place, they'll be used instead.
 # FIXME: These should all eventually be packaged on their own!
-Source100:      %{name}-%{version}-vendor.tar.gz
+Source100:      cargo-%{version}-vendor.tar.gz
 
-BuildRequires:  rust
-BuildRequires:  rust-std-static
-BuildRequires:  cargo
+BuildRequires:  rust122
+BuildRequires:  rust122-std-static
+BuildRequires:  cargo022
 BuildRequires:  make
 BuildRequires:  cmake
 BuildRequires:  gcc
@@ -37,7 +37,7 @@ BuildRequires:  zlib-devel
 BuildRequires:  pkgconfig
 
 # Cargo is not much use without Rust
-Requires:       rust
+# Requires:       rust
 
 %description
 Cargo is a tool that allows Rust projects to declare their various dependencies
@@ -54,7 +54,7 @@ This package includes HTML documentation for Cargo.
 
 %prep
 # cargo sources
-%setup -q -n %{name}-%{version}
+%setup -q -n cargo-%{version}
 tar -xzf %SOURCE100
 
 %patch1 -p1 -b .disable-mdbook
